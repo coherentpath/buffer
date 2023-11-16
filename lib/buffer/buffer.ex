@@ -1,4 +1,4 @@
-defmodule DVBuffer.Buffer do
+defmodule Buffer.Buffer do
   @moduledoc false
 
   defstruct [

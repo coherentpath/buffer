@@ -1,4 +1,4 @@
-defmodule DVBuffer.Helpers do
+defmodule Buffer.Helpers do
   @moduledoc false
 
   import ExUnit.Callbacks, only: [start_supervised: 1]
@@ -10,18 +10,18 @@ defmodule DVBuffer.Helpers do
   @doc false
   @spec seed_buffer(GenServer.server()) :: :ok
   def seed_buffer(buffer) do
-    DVBuffer.insert(buffer, "foo")
-    DVBuffer.insert(buffer, "bar")
-    DVBuffer.insert(buffer, "baz")
+    Buffer.insert(buffer, "foo")
+    Buffer.insert(buffer, "bar")
+    Buffer.insert(buffer, "baz")
   end
 
   @doc false
   @spec start_ex_buffer(keyword()) :: {:ok, GenServer.name()} | {:error, atom()}
   def start_ex_buffer(opts \\ []) do
-    name = Keyword.get(opts, :name, DVBuffer)
+    name = Keyword.get(opts, :name, Buffer)
     opts = Keyword.put_new(opts, :flush_callback, flush_callback(name))
 
-    case start_supervised({DVBuffer, opts}) do
+    case start_supervised({Buffer, opts}) do
       {:ok, pid} -> {:ok, process_name(pid)}
       {:error, {{_, {_, _, reason}}, _}} -> {:error, reason}
       {:error, {reason, _}} -> {:error, reason}

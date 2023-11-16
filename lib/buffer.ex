@@ -1,9 +1,9 @@
-defmodule DVBuffer do
+defmodule Buffer do
   @moduledoc """
   A simple data buffer that can be added directly to a supervision tree.
   """
 
-  alias DVBuffer.Buffer.{Server, Stream}
+  alias Buffer.Buffer.{Server, Stream}
 
   @supervisor_fields [:name, :partitioner, :partitions]
 
@@ -18,7 +18,7 @@ defmodule DVBuffer do
   end
 
   @doc """
-  Starts a `DVBuffer` process linked to the current process.
+  Starts a `Buffer` process linked to the current process.
 
   ## Options
 
@@ -68,7 +68,7 @@ defmodule DVBuffer do
   end
 
   @doc """
-  Lazily chunks an enumerable based on `DVBuffer` flush conditions.
+  Lazily chunks an enumerable based on `Buffer` flush conditions.
 
   ## Options
 
@@ -84,7 +84,7 @@ defmodule DVBuffer do
   defdelegate chunk(enum, opts \\ []), to: Stream
 
   @doc """
-  Lazily chunks an enumerable based on `DVBuffer` flush conditions and raises an `ArgumentError`
+  Lazily chunks an enumerable based on `Buffer` flush conditions and raises an `ArgumentError`
   with invalid options.
 
   For information on options, see `chunk/2`.
@@ -93,7 +93,7 @@ defmodule DVBuffer do
   defdelegate chunk!(enum, opts \\ []), to: Stream
 
   @doc """
-  Dumps the contents of the given `DVBuffer` to a list, bypassing a flush
+  Dumps the contents of the given `Buffer` to a list, bypassing a flush
   callback and resetting the buffer.
 
   ## Options
@@ -112,7 +112,7 @@ defmodule DVBuffer do
   end
 
   @doc """
-  Flushes the given `DVBuffer`, regardless of whether or not the flush conditions
+  Flushes the given `Buffer`, regardless of whether or not the flush conditions
   have been met.
 
   ## Options
@@ -133,7 +133,7 @@ defmodule DVBuffer do
   end
 
   @doc """
-  Returns information about the given `DVBuffer`.
+  Returns information about the given `Buffer`.
 
   ## Options
 
@@ -151,7 +151,7 @@ defmodule DVBuffer do
   end
 
   @doc """
-  Inserts the given item into the given `DVBuffer`.
+  Inserts the given item into the given `Buffer`.
   """
   @spec insert(GenServer.server(), term()) :: :ok | {:error, atom()}
   def insert(buffer, item) do
@@ -161,7 +161,7 @@ defmodule DVBuffer do
   end
 
   @doc """
-  Inserts a batch of items into the given `DVBuffer`.
+  Inserts a batch of items into the given `Buffer`.
 
   ## Options
 

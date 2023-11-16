@@ -1,7 +1,7 @@
-defmodule DVBuffer.Buffer.Stream do
+defmodule Buffer.Buffer.Stream do
   @moduledoc false
 
-  alias DVBuffer.Buffer
+  alias Buffer.Buffer
 
   @fields [:max_length, :max_size, :size_callback]
 

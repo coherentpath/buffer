@@ -1,17 +1,17 @@
-defmodule DVBuffer.MixProject do
+defmodule Buffer.MixProject do
   use Mix.Project
 
   @version "0.1.0"
 
   def project do
     [
-      app: :dv_buffer,
+      app: :buffer,
       version: @version,
       elixir: "~> 1.14",
       elixirc_paths: elixirc_paths(Mix.env()),
       dialyzer: dialyzer(),
       start_permanent: Mix.env() == :prod,
-      name: "DVBuffer",
+      name: "Buffer",
       aliases: aliases(),
       preferred_cli_env: preferred_cli_env(),
       deps: deps()

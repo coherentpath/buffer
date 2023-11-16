@@ -1,9 +1,9 @@
-defmodule DVBuffer.Buffer.Server do
+defmodule Buffer.Buffer.Server do
   @moduledoc false
 
   use GenServer
 
-  alias DVBuffer.Buffer
+  alias Buffer.Buffer
 
   @server_fields [
     :buffer_timeout,
