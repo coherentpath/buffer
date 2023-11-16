@@ -24,7 +24,10 @@ defmodule DVBuffer do
 
     * `:flush_callback` - The function invoked to flush a buffer. Must have an arity of 2
       where the first arg is a list of items and the second arg is a keyword list of flush
-      opts
+      opts. This option is required.
+
+    * `:name` - The name of the buffer. Must be an atom or a `:via` tuple. This option is
+      required.
 
     * `:buffer_timeout` - The maximum time (in ms) allowed between flushes of the buffer.
       Defaults to `:infinity`
