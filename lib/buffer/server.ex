@@ -1,9 +1,9 @@
-defmodule Buffer.Buffer.Server do
+defmodule Buffer.Server do
   @moduledoc false
 
   use GenServer
 
-  alias Buffer.Buffer
+  alias Buffer.State
 
   @server_fields [
     :buffer_timeout,
@@ -65,7 +65,7 @@ defmodule Buffer.Buffer.Server do
 
   @doc false
   @impl GenServer
-  @spec init(keyword()) :: {:ok, Buffer.t(), {:continue, :refresh}} | {:stop, atom()}
+  @spec init(keyword()) :: {:ok, State.t(), {:continue, :refresh}} | {:stop, atom()}
   def init(opts) do
     Process.flag(:trap_exit, true)
 
@@ -77,21 +77,21 @@ defmodule Buffer.Buffer.Server do
 
   @doc false
   @impl GenServer
-  @spec handle_call(term(), GenServer.from(), Buffer.t()) ::
-          {:reply, term(), Buffer.t()}
-          | {:reply, term(), Buffer.t(), {:continue, :flush | :refresh}}
+  @spec handle_call(term(), GenServer.from(), State.t()) ::
+          {:reply, term(), State.t()}
+          | {:reply, term(), State.t(), {:continue, :flush | :refresh}}
   def handle_call(:async_flush, _from, buffer) do
     {:reply, :ok, buffer, {:continue, :flush}}
   end
 
   def handle_call(:dump, _from, buffer) do
-    {:reply, Buffer.items(buffer), buffer, {:continue, :refresh}}
+    {:reply, State.items(buffer), buffer, {:continue, :refresh}}
   end
 
   def handle_call(:info, _from, buffer), do: {:reply, build_info(buffer), buffer}
 
   def handle_call({:insert, item}, _from, buffer) do
-    case Buffer.insert(buffer, item) do
+    case State.insert(buffer, item) do
       {:flush, buffer} -> {:reply, :ok, buffer, {:continue, :flush}}
       {:cont, buffer} -> {:reply, :ok, buffer}
     end
@@ -115,8 +115,8 @@ defmodule Buffer.Buffer.Server do
 
   @doc false
   @impl GenServer
-  @spec handle_continue(term(), Buffer.t()) ::
-          {:noreply, Buffer.t()} | {:noreply, Buffer.t(), {:continue, :refresh}}
+  @spec handle_continue(term(), State.t()) ::
+          {:noreply, State.t()} | {:noreply, State.t(), {:continue, :refresh}}
   def handle_continue(:flush, buffer) do
     do_flush(buffer)
     {:noreply, buffer, {:continue, :refresh}}
@@ -126,8 +126,8 @@ defmodule Buffer.Buffer.Server do
 
   @doc false
   @impl GenServer
-  @spec handle_info(term(), Buffer.t()) ::
-          {:noreply, Buffer.t()} | {:noreply, Buffer.t(), {:continue, :flush}}
+  @spec handle_info(term(), State.t()) ::
+          {:noreply, State.t()} | {:noreply, State.t(), {:continue, :flush}}
   def handle_info({:timeout, timer, :flush}, buffer) when timer == buffer.timer do
     {:noreply, buffer, {:continue, :flush}}
   end
@@ -136,7 +136,7 @@ defmodule Buffer.Buffer.Server do
 
   @doc false
   @impl GenServer
-  @spec terminate(term(), Buffer.t()) :: term()
+  @spec terminate(term(), State.t()) :: term()
   def terminate(_, buffer), do: do_flush(buffer)
 
   ################################
@@ -146,7 +146,7 @@ defmodule Buffer.Buffer.Server do
   defp init_buffer(opts) do
     case Keyword.get(opts, :flush_callback) do
       nil -> {:error, :invalid_callback}
-      _ -> Buffer.new(opts)
+      _ -> State.new(opts)
     end
   end
 
@@ -164,7 +164,7 @@ defmodule Buffer.Buffer.Server do
 
   defp do_safe_insert_batch(buffer, items) do
     Enum.reduce(items, buffer, fn item, acc ->
-      case Buffer.insert(acc, item) do
+      case State.insert(acc, item) do
         {:flush, acc} ->
           do_flush(acc)
           refresh(acc)
@@ -178,19 +178,19 @@ defmodule Buffer.Buffer.Server do
   defp do_unsafe_insert_batch(buffer, items) do
     Enum.reduce(items, {:cont, buffer}, fn item, acc ->
       {_, buffer} = acc
-      Buffer.insert(buffer, item)
+      State.insert(buffer, item)
     end)
   end
 
-  defp refresh(%Buffer{timeout: :infinity} = buffer), do: Buffer.refresh(buffer)
+  defp refresh(%State{timeout: :infinity} = buffer), do: State.refresh(buffer)
 
   defp refresh(buffer) do
     cancel_upcoming_flush(buffer)
     timer = schedule_next_flush(buffer)
-    Buffer.refresh(buffer, timer)
+    State.refresh(buffer, timer)
   end
 
-  defp cancel_upcoming_flush(%Buffer{timer: nil}), do: :ok
+  defp cancel_upcoming_flush(%State{timer: nil}), do: :ok
   defp cancel_upcoming_flush(buffer), do: Process.cancel_timer(buffer.timer)
 
   defp schedule_next_flush(buffer) do
@@ -199,7 +199,7 @@ defmodule Buffer.Buffer.Server do
     :erlang.start_timer(buffer.timeout, self(), :flush)
   end
 
-  defp get_next_flush(%Buffer{timer: nil}), do: nil
+  defp get_next_flush(%State{timer: nil}), do: nil
 
   defp get_next_flush(buffer) do
     with false <- Process.read_timer(buffer.timer), do: nil
@@ -209,7 +209,7 @@ defmodule Buffer.Buffer.Server do
     opts = [length: buffer.length, meta: buffer.flush_meta, size: buffer.size]
 
     buffer
-    |> Buffer.items()
+    |> State.items()
     |> buffer.flush_callback.(opts)
   end
 end

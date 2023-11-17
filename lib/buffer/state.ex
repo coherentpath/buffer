@@ -1,4 +1,4 @@
-defmodule Buffer.Buffer do
+defmodule Buffer.State do
   @moduledoc false
 
   defstruct [

@@ -3,7 +3,7 @@ defmodule Buffer do
   A simple data buffer that can be added directly to a supervision tree.
   """
 
-  alias Buffer.Buffer.{Server, Stream}
+  alias Buffer.{Server, Stream}
 
   @supervisor_fields [:name, :partitioner, :partitions]
 
