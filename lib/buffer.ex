@@ -161,7 +161,7 @@ defmodule Buffer do
   end
 
   @doc """
-  Inserts a batch of items into the given `Buffer`.
+  Inserts a batch of items into the given `Buffer` and returns the number of items inserted.
 
   ## Options
 
