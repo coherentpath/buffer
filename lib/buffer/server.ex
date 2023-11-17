@@ -98,13 +98,14 @@ defmodule Buffer.Server do
   end
 
   def handle_call({:safe_insert_batch, items}, _from, buffer) do
-    {:reply, :ok, do_safe_insert_batch(buffer, items)}
+    {buffer, count} = do_safe_insert_batch(buffer, items)
+    {:reply, count, buffer}
   end
 
   def handle_call({:unsafe_insert_batch, items}, _from, buffer) do
     case do_unsafe_insert_batch(buffer, items) do
-      {:flush, buffer} -> {:reply, :ok, buffer, {:continue, :flush}}
-      {:cont, buffer} -> {:reply, :ok, buffer}
+      {{:flush, buffer}, count} -> {:reply, count, buffer, {:continue, :flush}}
+      {{:cont, buffer}, count} -> {:reply, count, buffer}
     end
   end
 
@@ -163,22 +164,22 @@ defmodule Buffer.Server do
   end
 
   defp do_safe_insert_batch(buffer, items) do
-    Enum.reduce(items, buffer, fn item, acc ->
-      case State.insert(acc, item) do
-        {:flush, acc} ->
-          do_flush(acc)
-          refresh(acc)
+    Enum.reduce(items, {buffer, 0}, fn item, {buffer, count} ->
+      case State.insert(buffer, item) do
+        {:flush, buffer} ->
+          do_flush(buffer)
+          {refresh(buffer), count + 1}
 
-        {:cont, acc} ->
-          acc
+        {:cont, buffer} ->
+          {buffer, count + 1}
       end
     end)
   end
 
   defp do_unsafe_insert_batch(buffer, items) do
-    Enum.reduce(items, {:cont, buffer}, fn item, acc ->
-      {_, buffer} = acc
-      State.insert(buffer, item)
+    Enum.reduce(items, {{:cont, buffer}, 0}, fn item, acc ->
+      {{_, buffer}, count} = acc
+      {State.insert(buffer, item), count + 1}
     end)
   end
 

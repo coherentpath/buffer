@@ -170,10 +170,11 @@ defmodule Buffer do
       regardless of flush conditions being met. Afterwards, if a limit has been exceeded,
       the buffer will be flushed async.
   """
-  @spec insert_batch(GenServer.server(), Enumerable.t(), keyword()) :: :ok | {:error, atom()}
+  @spec insert_batch(GenServer.server(), Enumerable.t(), keyword()) ::
+          {:ok | non_neg_integer()} | {:error, atom()}
   def insert_batch(buffer, items, opts \\ []) do
     with {:ok, {partitioner, _}} <- fetch_buffer(buffer) do
-      do_insert_batch(buffer, partitioner, items, opts)
+      {:ok, do_insert_batch(buffer, partitioner, items, opts)}
     end
   end
 
