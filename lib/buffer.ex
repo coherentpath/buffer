@@ -171,7 +171,7 @@ defmodule Buffer do
       the buffer will be flushed async.
   """
   @spec insert_batch(GenServer.server(), Enumerable.t(), keyword()) ::
-          {:ok | non_neg_integer()} | {:error, atom()}
+          {:ok, non_neg_integer()} | {:error, atom()}
   def insert_batch(buffer, items, opts \\ []) do
     with {:ok, {partitioner, _}} <- fetch_buffer(buffer) do
       {:ok, do_insert_batch(buffer, partitioner, items, opts)}
