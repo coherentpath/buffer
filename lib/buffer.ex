@@ -43,6 +43,10 @@ defmodule Buffer do
     * `:max_size` - The maximum size (in bytes) of the buffer before being flushed. By default,
       this limit is `:infinity`.
 
+    * `:ordering` - The order in which buffered items are returned. The options are `:fifo`
+      (first-in-first-out) and `:lifo` (last-in-first-out). Defaults to `:fifo`. Using `:lifo`
+      provides a small performance improvement by skipping the list reversal.
+
     * `:partitioner` - The method by which items are inserted into different partitions. The
       options are `:rotating` and `:random` and the former is the default.
 

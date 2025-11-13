@@ -6,6 +6,7 @@ defmodule Buffer.State do
     :flush_meta,
     :max_length,
     :max_size,
+    :ordering,
     :partition,
     :size_callback,
     :timeout,
@@ -36,6 +37,7 @@ defmodule Buffer.State do
 
   @doc false
   @spec items(t()) :: list()
+  def items(%{ordering: :lifo} = buffer), do: buffer.buffer
   def items(buffer), do: Enum.reverse(buffer.buffer)
 
   @doc false
@@ -46,12 +48,14 @@ defmodule Buffer.State do
          {:ok, size_callback} <- get_size_callback(opts),
          {:ok, max_length} <- get_max_length(opts, jitter),
          {:ok, max_size} <- get_max_size(opts, jitter),
-         {:ok, timeout} <- get_timeout(opts, jitter) do
+         {:ok, timeout} <- get_timeout(opts, jitter),
+         {:ok, ordering} <- get_ordering(opts) do
       buffer = %__MODULE__{
         flush_callback: flush_callback,
         flush_meta: Keyword.get(opts, :flush_meta),
         max_length: max_length,
         max_size: max_size,
+        ordering: ordering,
         partition: Keyword.get(opts, :partition, 0),
         size_callback: size_callback,
         timeout: timeout
@@ -101,6 +105,13 @@ defmodule Buffer.State do
 
   defp get_timeout(opts, jitter) do
     validate_limit(Keyword.get(opts, :buffer_timeout, :infinity), jitter)
+  end
+
+  defp get_ordering(opts) do
+    case Keyword.get(opts, :ordering, :fifo) do
+      ordering when ordering in [:fifo, :lifo] -> {:ok, ordering}
+      _ -> {:error, :invalid_ordering}
+    end
   end
 
   defp validate_callback(fun, arity) when is_function(fun, arity), do: {:ok, fun}

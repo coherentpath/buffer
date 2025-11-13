@@ -12,6 +12,7 @@ defmodule Buffer.Server do
     :jitter_rate,
     :max_length,
     :max_size,
+    :ordering,
     :partition,
     :size_callback
   ]
