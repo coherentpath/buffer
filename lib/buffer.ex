@@ -99,14 +99,18 @@ defmodule Buffer do
   ## Options
 
     * `:partition` - The specific partition to dump. Defaults to `:all`.
+
+    * `:timeout` - The timeout for the GenServer call in milliseconds. Defaults to `5000`.
   """
   @spec dump(GenServer.server(), keyword()) :: {:ok, list()} | {:error, atom()}
   def dump(buffer, opts \\ []) do
+    timeout = Keyword.get(opts, :timeout, 5000)
+
     with {:ok, {_, parts}} <- fetch_buffer(buffer),
          {:ok, part} <- validate_partition(opts, parts) do
       case part do
-        :all -> {:ok, Enum.reduce(1..parts, [], &(&2 ++ do_dump_part(buffer, &1 - 1)))}
-        part -> {:ok, do_dump_part(buffer, part)}
+        :all -> {:ok, Enum.reduce(1..parts, [], &(&2 ++ do_dump_part(buffer, &1 - 1, timeout)))}
+        part -> {:ok, do_dump_part(buffer, part, timeout)}
       end
     end
   end
@@ -120,6 +124,8 @@ defmodule Buffer do
     * `:async` - Whether or not the flush will be async. Defaults to `true`.
 
     * `:partition` - The specific partition to flush. Defaults to `:all`.
+
+    * `:timeout` - The timeout for the GenServer call in milliseconds. Defaults to `5000`.
   """
   @spec flush(GenServer.server(), keyword()) :: :ok | {:error, atom()}
   def flush(buffer, opts \\ []) do
@@ -138,25 +144,33 @@ defmodule Buffer do
   ## Options
 
     * `:partition` - The specific partition to return info for. Defaults to `:all`.
+
+    * `:timeout` - The timeout for the GenServer call in milliseconds. Defaults to `5000`.
   """
   @spec info(GenServer.server(), keyword()) :: {:ok, list()} | {:error, atom()}
   def info(buffer, opts \\ []) do
+    timeout = Keyword.get(opts, :timeout, 5000)
+
     with {:ok, {_, parts}} <- fetch_buffer(buffer),
          {:ok, part} <- validate_partition(opts, parts) do
       case part do
-        :all -> {:ok, Enum.map(1..parts, &do_info_part(buffer, &1 - 1))}
-        part -> {:ok, [do_info_part(buffer, part)]}
+        :all -> {:ok, Enum.map(1..parts, &do_info_part(buffer, &1 - 1, timeout))}
+        part -> {:ok, [do_info_part(buffer, part, timeout)]}
       end
     end
   end
 
   @doc """
   Inserts the given item into the given `Buffer`.
+
+  ## Options
+
+    * `timeout` - The timeout for the GenServer call in milliseconds. Defaults to `5000`.
   """
-  @spec insert(GenServer.server(), term()) :: :ok | {:error, atom()}
-  def insert(buffer, item) do
+  @spec insert(GenServer.server(), term(), timeout()) :: :ok | {:error, atom()}
+  def insert(buffer, item, timeout \\ 5000) do
     with {:ok, {partitioner, _}} <- fetch_buffer(buffer) do
-      do_insert(buffer, partitioner, item)
+      do_insert(buffer, partitioner, item, timeout)
     end
   end
 
@@ -169,6 +183,8 @@ defmodule Buffer do
       Defaults to `true`. If set to `false`, all items in the batch will be inserted
       regardless of flush conditions being met. Afterwards, if a limit has been exceeded,
       the buffer will be flushed async.
+
+    * `:timeout` - The timeout for the GenServer call in milliseconds. Defaults to `5000`.
   """
   @spec insert_batch(GenServer.server(), Enumerable.t(), keyword()) ::
           {:ok, non_neg_integer()} | {:error, atom()}
@@ -254,10 +270,10 @@ defmodule Buffer do
 
   defp build_key(buffer), do: {__MODULE__, buffer}
 
-  defp do_dump_part(buffer, partition) do
+  defp do_dump_part(buffer, partition, timeout) do
     buffer
     |> buffer_partition_name(partition)
-    |> Server.dump()
+    |> Server.dump(timeout)
   end
 
   defp do_flush_part(buffer, partition, opts) do
@@ -266,16 +282,16 @@ defmodule Buffer do
     |> Server.flush(opts)
   end
 
-  defp do_info_part(buffer, partition) do
+  defp do_info_part(buffer, partition, timeout) do
     buffer
     |> buffer_partition_name(partition)
-    |> Server.info()
+    |> Server.info(timeout)
   end
 
-  defp do_insert(buffer, partitioner, item) do
+  defp do_insert(buffer, partitioner, item, timeout) do
     buffer
     |> buffer_partition_name(partitioner.())
-    |> Server.insert(item)
+    |> Server.insert(item, timeout)
   end
 
   defp do_insert_batch(buffer, partitioner, items, opts) do
