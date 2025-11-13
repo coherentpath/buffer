@@ -28,34 +28,38 @@ defmodule Buffer.Server do
   end
 
   @doc false
-  @spec dump(GenServer.server()) :: list()
-  def dump(buffer), do: GenServer.call(buffer, :dump)
+  @spec dump(GenServer.server(), timeout()) :: list()
+  def dump(buffer, timeout \\ 5000), do: GenServer.call(buffer, :dump, timeout)
 
   @doc false
   @spec flush(GenServer.server(), keyword()) :: :ok
   def flush(buffer, opts \\ []) do
+    timeout = Keyword.get(opts, :timeout, 5000)
+
     if Keyword.get(opts, :async, true) do
-      GenServer.call(buffer, :async_flush)
+      GenServer.call(buffer, :async_flush, timeout)
     else
-      GenServer.call(buffer, :sync_flush)
+      GenServer.call(buffer, :sync_flush, timeout)
     end
   end
 
   @doc false
-  @spec info(GenServer.server()) :: map()
-  def info(buffer), do: GenServer.call(buffer, :info)
+  @spec info(GenServer.server(), timeout()) :: map()
+  def info(buffer, timeout \\ 5000), do: GenServer.call(buffer, :info, timeout)
 
   @doc false
-  @spec insert(GenServer.server(), term()) :: :ok
-  def insert(buffer, item), do: GenServer.call(buffer, {:insert, item})
+  @spec insert(GenServer.server(), term(), timeout()) :: :ok
+  def insert(buffer, item, timeout \\ 5000), do: GenServer.call(buffer, {:insert, item}, timeout)
 
   @doc false
   @spec insert_batch(GenServer.server(), Enumerable.t(), keyword()) :: :ok
   def insert_batch(buffer, items, opts \\ []) do
+    timeout = Keyword.get(opts, :timeout, 5000)
+
     if Keyword.get(opts, :safe_flush, true) do
-      GenServer.call(buffer, {:safe_insert_batch, items})
+      GenServer.call(buffer, {:safe_insert_batch, items}, timeout)
     else
-      GenServer.call(buffer, {:unsafe_insert_batch, items})
+      GenServer.call(buffer, {:unsafe_insert_batch, items}, timeout)
     end
   end
 
