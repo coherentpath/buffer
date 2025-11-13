@@ -70,6 +70,12 @@ defmodule BufferTest do
       assert start_ex_buffer(opts) == {:error, :invalid_jitter}
     end
 
+    test "will not start with an invalid ordering" do
+      opts = [ordering: :invalid]
+
+      assert start_ex_buffer(opts) == {:error, :invalid_ordering}
+    end
+
     test "will flush an Buffer on termination" do
       assert {:ok, buffer} = start_ex_buffer()
       assert seed_buffer(buffer) == :ok
@@ -177,6 +183,14 @@ defmodule BufferTest do
       assert {:ok, buffer} = start_ex_buffer()
       assert Buffer.dump(buffer, partition: -1) == {:error, :invalid_partition}
     end
+
+    test "will return items in LIFO order when set" do
+      opts = [ordering: :lifo]
+
+      assert {:ok, buffer} = start_ex_buffer(opts)
+      assert seed_buffer(buffer) == :ok
+      assert Buffer.dump(buffer) == {:ok, ["baz", "bar", "foo"]}
+    end
   end
 
   describe "flush/2" do
@@ -231,6 +245,14 @@ defmodule BufferTest do
     test "will return an error with an invalid partition" do
       assert {:ok, buffer} = start_ex_buffer()
       assert Buffer.flush(buffer, partition: -1) == {:error, :invalid_partition}
+    end
+
+    test "will flush items in LIFO order when set" do
+      opts = [ordering: :lifo, max_length: 3]
+
+      assert {:ok, buffer} = start_ex_buffer(opts)
+      assert seed_buffer(buffer) == :ok
+      assert_receive {^buffer, ["baz", "bar", "foo"], _}
     end
   end
 
